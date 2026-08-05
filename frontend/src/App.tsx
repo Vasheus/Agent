@@ -1,9 +1,7 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
 import {
   HiArrowUp,
-  HiOutlineChatBubbleLeftRight,
   HiOutlinePlus,
-  HiOutlineQuestionMarkCircle,
 } from "react-icons/hi2";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -14,11 +12,9 @@ type Language = "en" | "fr" | "ar";
 type Copy = {
   assistant: string;
   newChat: string;
-  eyebrow: string;
   title: string;
   titleAccent: string;
   intro: string;
-  starters: string[];
   placeholder: string;
   send: string;
   thinking: string;
@@ -33,11 +29,9 @@ const copy: Record<Language, Copy> = {
   en: {
     assistant: "AI calling assistant",
     newChat: "New conversation",
-    eyebrow: "YOUR CALLING COPILOT",
-    title: "What can I help",
-    titleAccent: "you prepare?",
-    intro: "Plan calls, sharpen your message, and write thoughtful follow-ups.",
-    starters: ["Prepare a customer call", "Write a follow-up message", "Create a sales call script"],
+    title: "Start a conversation",
+    titleAccent: "when you’re ready.",
+    intro: "Ask for help preparing a call, improving a message, or writing a follow-up.",
     placeholder: "Message VR Digital Calling",
     send: "Send message",
     thinking: "Assistant is thinking",
@@ -48,11 +42,9 @@ const copy: Record<Language, Copy> = {
   fr: {
     assistant: "Assistant d’appels IA",
     newChat: "Nouvelle conversation",
-    eyebrow: "VOTRE COPILOTE D’APPELS",
-    title: "Que puis-je vous aider",
-    titleAccent: "à préparer ?",
-    intro: "Planifiez vos appels, améliorez votre message et rédigez des suivis efficaces.",
-    starters: ["Préparer un appel client", "Rédiger un message de suivi", "Créer un script d’appel commercial"],
+    title: "Commencez une conversation",
+    titleAccent: "quand vous êtes prêt.",
+    intro: "Demandez de l’aide pour préparer un appel, améliorer un message ou rédiger un suivi.",
     placeholder: "Écrire à VR Digital Calling",
     send: "Envoyer le message",
     thinking: "L’assistant réfléchit",
@@ -63,11 +55,9 @@ const copy: Record<Language, Copy> = {
   ar: {
     assistant: "مساعد المكالمات الذكي",
     newChat: "محادثة جديدة",
-    eyebrow: "مساعدك الذكي للمكالمات",
-    title: "كيف يمكنني مساعدتك",
-    titleAccent: "في التحضير؟",
-    intro: "خطّط لمكالماتك، وحسّن رسالتك، واكتب متابعات فعّالة.",
-    starters: ["تحضير مكالمة مع عميل", "كتابة رسالة متابعة", "إنشاء نص لمكالمة مبيعات"],
+    title: "ابدأ محادثة",
+    titleAccent: "عندما تكون جاهزاً.",
+    intro: "اطلب المساعدة في تحضير مكالمة أو تحسين رسالة أو كتابة متابعة.",
     placeholder: "اكتب إلى VR Digital Calling",
     send: "إرسال الرسالة",
     thinking: "المساعد يفكر",
@@ -184,45 +174,22 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark"><img src="/vr-logo.png" alt="VR Digital Calling" /></div>
-          <div><h1>VR Digital</h1><span>Calling</span></div>
-        </div>
-
-        <button className="new-chat" type="button" onClick={resetChat}>
-          <HiOutlinePlus aria-hidden="true" />
-          <span>{t.newChat}</span>
-        </button>
-
-        <div className="sidebar-current">
-          <HiOutlineChatBubbleLeftRight aria-hidden="true" />
-          <span>{t.assistant}</span>
-        </div>
-
-        <label className="language-select sidebar-language">
-          <span>{t.language}</span>
-          <select value={language} onChange={(event) => setLanguage(event.target.value as Language)}>
-            <option value="en">English</option>
-            <option value="fr">Français</option>
-            <option value="ar">العربية</option>
-          </select>
-        </label>
-      </aside>
-
       <section className="chat-panel" aria-label="VR Digital Calling">
         <header className="topbar">
-          <div className="mobile-brand">
-            <img src="/vr-logo.png" alt="" />
+          <button className="new-chat" type="button" onClick={resetChat}>
+            <HiOutlinePlus aria-hidden="true" />
+            <span>{t.newChat}</span>
+          </button>
+          <div className="header-brand">
+            <img src="/vr-logo.png" alt="VR Digital Calling" />
             <span>VR Digital Calling</span>
           </div>
-          <p>{t.assistant}</p>
           <label className="language-select topbar-language">
             <span className="sr-only">{t.language}</span>
             <select value={language} onChange={(event) => setLanguage(event.target.value as Language)}>
-              <option value="en">EN</option>
-              <option value="fr">FR</option>
-              <option value="ar">AR</option>
+              <option value="en">English</option>
+              <option value="fr">Français</option>
+              <option value="ar">العربية</option>
             </select>
           </label>
         </header>
@@ -230,15 +197,8 @@ export default function App() {
         <div className="conversation" aria-live="polite">
           {messages.length === 0 ? (
             <div className="welcome">
-              <div className="welcome-icon"><HiOutlineQuestionMarkCircle aria-hidden="true" /></div>
-              <span className="eyebrow">{t.eyebrow}</span>
               <h2>{t.title}<br /><strong>{t.titleAccent}</strong></h2>
               <p>{t.intro}</p>
-              <div className="suggestions">
-                {t.starters.map((starter) => (
-                  <button key={starter} type="button" onClick={() => void sendMessage(starter)}>{starter}</button>
-                ))}
-              </div>
             </div>
           ) : (
             <div className="message-list">
