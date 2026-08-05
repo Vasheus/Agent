@@ -1,4 +1,12 @@
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import {
+  HiArrowUp,
+  HiOutlineChatBubbleLeftRight,
+  HiOutlinePlus,
+  HiOutlineQuestionMarkCircle,
+} from "react-icons/hi2";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Message = { role: "user" | "assistant"; content: string };
 type Language = "en" | "fr" | "ar";
@@ -16,6 +24,7 @@ type Copy = {
   thinking: string;
   unavailable: string;
   error: string;
+  language: string;
 };
 
 const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -23,54 +32,62 @@ const API_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replac
 const copy: Record<Language, Copy> = {
   en: {
     assistant: "AI calling assistant",
-    newChat: "New chat",
+    newChat: "New conversation",
     eyebrow: "YOUR CALLING COPILOT",
-    title: "Every conversation,",
-    titleAccent: "made smarter.",
-    intro: "Prepare calls, improve your message, and follow up with confidence. How can I help?",
+    title: "What can I help",
+    titleAccent: "you prepare?",
+    intro: "Plan calls, sharpen your message, and write thoughtful follow-ups.",
     starters: ["Prepare a customer call", "Write a follow-up message", "Create a sales call script"],
-    placeholder: "Ask about your next call...",
+    placeholder: "Message VR Digital Calling",
     send: "Send message",
     thinking: "Assistant is thinking",
     unavailable: "The assistant is unavailable right now.",
     error: "Something went wrong. Please try again.",
+    language: "Language",
   },
   fr: {
     assistant: "Assistant d’appels IA",
-    newChat: "Nouvelle discussion",
+    newChat: "Nouvelle conversation",
     eyebrow: "VOTRE COPILOTE D’APPELS",
-    title: "Chaque conversation,",
-    titleAccent: "plus intelligente.",
-    intro: "Préparez vos appels, améliorez votre message et relancez en toute confiance. Comment puis-je vous aider ?",
+    title: "Que puis-je vous aider",
+    titleAccent: "à préparer ?",
+    intro: "Planifiez vos appels, améliorez votre message et rédigez des suivis efficaces.",
     starters: ["Préparer un appel client", "Rédiger un message de suivi", "Créer un script d’appel commercial"],
-    placeholder: "Posez une question sur votre prochain appel...",
+    placeholder: "Écrire à VR Digital Calling",
     send: "Envoyer le message",
     thinking: "L’assistant réfléchit",
     unavailable: "L’assistant est indisponible pour le moment.",
     error: "Une erreur s’est produite. Veuillez réessayer.",
+    language: "Langue",
   },
   ar: {
     assistant: "مساعد المكالمات الذكي",
     newChat: "محادثة جديدة",
     eyebrow: "مساعدك الذكي للمكالمات",
-    title: "كل محادثة،",
-    titleAccent: "أكثر ذكاءً.",
-    intro: "حضّر مكالماتك، وحسّن رسالتك، وتابع بثقة. كيف يمكنني مساعدتك؟",
+    title: "كيف يمكنني مساعدتك",
+    titleAccent: "في التحضير؟",
+    intro: "خطّط لمكالماتك، وحسّن رسالتك، واكتب متابعات فعّالة.",
     starters: ["تحضير مكالمة مع عميل", "كتابة رسالة متابعة", "إنشاء نص لمكالمة مبيعات"],
-    placeholder: "اسأل عن مكالمتك القادمة...",
+    placeholder: "اكتب إلى VR Digital Calling",
     send: "إرسال الرسالة",
     thinking: "المساعد يفكر",
     unavailable: "المساعد غير متاح حالياً.",
     error: "حدث خطأ. يرجى المحاولة مرة أخرى.",
+    language: "اللغة",
   },
 };
 
-function SendIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 3 18 9-18 9 3.8-9L3 3Zm4.7 10.2-1.8 4.3 10.4-5.2H7.8a1 1 0 0 1-.1.9Zm8.6-1.5L5.9 6.5l1.8 4.3a1 1 0 0 1 .1.9h8.5Z" /></svg>;
-}
-
-function QuestionIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm0-5.25a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5Zm.15-8.25c-2.1 0-3.55 1.24-3.65 3.18h2c.08-.84.7-1.38 1.62-1.38.88 0 1.48.49 1.48 1.2 0 .58-.32.94-1.16 1.43-1.08.64-1.47 1.25-1.42 2.42h1.84c0-.67.2-.94 1.03-1.45 1.13-.68 1.71-1.53 1.71-2.58 0-1.68-1.4-2.82-3.45-2.82Z" /></svg>;
+function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a: ({ children, ...props }) => <a {...props} target="_blank" rel="noreferrer">{children}</a>,
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
 }
 
 export default function App() {
@@ -83,6 +100,7 @@ export default function App() {
     return saved === "fr" || saved === "ar" ? saved : "en";
   });
   const endRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const t = copy[language];
 
   useEffect(() => {
@@ -91,89 +109,179 @@ export default function App() {
     localStorage.setItem("vr-language", language);
   }, [language]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: loading ? "auto" : "smooth" });
+  }, [messages, loading]);
+
+  function resetChat() {
+    setMessages([]);
+    setInput("");
+    setError("");
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }
 
   async function sendMessage(text: string) {
     const content = text.trim();
     if (!content || loading) return;
+
     const nextMessages: Message[] = [...messages, { role: "user", content }];
     setMessages(nextMessages);
     setInput("");
     setError("");
     setLoading(true);
+
     try {
       const response = await fetch(`${API_URL}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: nextMessages, language }),
       });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || t.unavailable);
-      setMessages((current) => [...current, { role: "assistant", content: data.message }]);
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || t.unavailable);
+      }
+      if (!response.body) throw new Error(t.unavailable);
+
+      setMessages((current) => [...current, { role: "assistant", content: "" }]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let streamedContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        streamedContent += decoder.decode(value, { stream: true });
+        const latest = streamedContent;
+        setMessages((current) => {
+          const updated = [...current];
+          const last = updated.length - 1;
+          if (last >= 0 && updated[last].role === "assistant") updated[last] = { role: "assistant", content: latest };
+          return updated;
+        });
+      }
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : t.error);
     } finally {
       setLoading(false);
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
   }
 
-  function handleSubmit(event: FormEvent) { event.preventDefault(); void sendMessage(input); }
-  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void sendMessage(input); }
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    void sendMessage(input);
   }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void sendMessage(input);
+    }
+  }
+
+  const awaitingFirstToken = loading && messages[messages.length - 1]?.role === "user";
 
   return (
     <main className="app-shell">
-      <section className="chat-card" aria-label="VR Digital Calling">
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-mark"><img src="/vr-logo.png" alt="VR Digital Calling" /></div>
+          <div><h1>VR Digital</h1><span>Calling</span></div>
+        </div>
+
+        <button className="new-chat" type="button" onClick={resetChat}>
+          <HiOutlinePlus aria-hidden="true" />
+          <span>{t.newChat}</span>
+        </button>
+
+        <div className="sidebar-current">
+          <HiOutlineChatBubbleLeftRight aria-hidden="true" />
+          <span>{t.assistant}</span>
+        </div>
+
+        <label className="language-select sidebar-language">
+          <span>{t.language}</span>
+          <select value={language} onChange={(event) => setLanguage(event.target.value as Language)}>
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="ar">العربية</option>
+          </select>
+        </label>
+      </aside>
+
+      <section className="chat-panel" aria-label="VR Digital Calling">
         <header className="topbar">
-          <div className="brand">
-            <div className="brand-mark"><img src="/vr-logo.png" alt="" /></div>
-            <div><h1>VR Digital <span>Calling</span></h1><p>{t.assistant}</p></div>
+          <div className="mobile-brand">
+            <img src="/vr-logo.png" alt="" />
+            <span>VR Digital Calling</span>
           </div>
-          <div className="topbar-actions">
-            <label className="language-select">
-              <span className="sr-only">Language</span>
-              <select value={language} onChange={(event) => setLanguage(event.target.value as Language)} aria-label="Language">
-                <option value="en">English</option>
-                <option value="fr">Français</option>
-                <option value="ar">العربية</option>
-              </select>
-            </label>
-            {messages.length > 0 && <button className="new-chat" type="button" onClick={() => { setMessages([]); setError(""); }}>{t.newChat}</button>}
-          </div>
+          <p>{t.assistant}</p>
+          <label className="language-select topbar-language">
+            <span className="sr-only">{t.language}</span>
+            <select value={language} onChange={(event) => setLanguage(event.target.value as Language)}>
+              <option value="en">EN</option>
+              <option value="fr">FR</option>
+              <option value="ar">AR</option>
+            </select>
+          </label>
         </header>
 
         <div className="conversation" aria-live="polite">
           {messages.length === 0 ? (
             <div className="welcome">
-              <div className="welcome-icon"><QuestionIcon /></div>
+              <div className="welcome-icon"><HiOutlineQuestionMarkCircle aria-hidden="true" /></div>
               <span className="eyebrow">{t.eyebrow}</span>
               <h2>{t.title}<br /><strong>{t.titleAccent}</strong></h2>
               <p>{t.intro}</p>
               <div className="suggestions">
-                {t.starters.map((starter) => <button key={starter} onClick={() => void sendMessage(starter)}>{starter}</button>)}
+                {t.starters.map((starter) => (
+                  <button key={starter} type="button" onClick={() => void sendMessage(starter)}>{starter}</button>
+                ))}
               </div>
             </div>
           ) : (
             <div className="message-list">
               {messages.map((message, index) => (
-                <div className={`message-row ${message.role}`} key={`${message.role}-${index}`}>
-                  {message.role === "assistant" && <div className="avatar"><img src="/vr-logo.png" alt="VR" /></div>}
-                  <div className="bubble">{message.content}</div>
-                </div>
+                <article className={`message-row ${message.role}`} key={`${message.role}-${index}`}>
+                  {message.role === "assistant" && <div className="avatar"><img src="/vr-logo.png" alt="" /></div>}
+                  <div className="bubble">
+                    {message.role === "assistant" ? <MarkdownMessage content={message.content} /> : message.content}
+                    {message.role === "assistant" && loading && index === messages.length - 1 && <span className="stream-cursor" aria-hidden="true" />}
+                  </div>
+                </article>
               ))}
-              {loading && <div className="message-row assistant"><div className="avatar"><img src="/vr-logo.png" alt="VR" /></div><div className="bubble typing" aria-label={t.thinking}><span /><span /><span /></div></div>}
+              {awaitingFirstToken && (
+                <div className="message-row assistant">
+                  <div className="avatar"><img src="/vr-logo.png" alt="" /></div>
+                  <div className="typing" aria-label={t.thinking}><span /><span /><span /></div>
+                </div>
+              )}
               <div ref={endRef} />
             </div>
           )}
         </div>
 
-        <div className="composer-wrap">
-          {error && <p className="error" role="alert">{error}</p>}
-          <form className="composer" onSubmit={handleSubmit}>
-            <textarea aria-label={t.placeholder} placeholder={t.placeholder} value={input} onChange={(event) => setInput(event.target.value)} onKeyDown={handleKeyDown} rows={1} maxLength={2000} disabled={loading} />
-            <button type="submit" className="send-button" aria-label={t.send} disabled={!input.trim() || loading}><SendIcon /></button>
-          </form>
+        <div className="composer-area">
+          <div className="composer-inner">
+            {error && <p className="error" role="alert">{error}</p>}
+            <form className="composer" onSubmit={handleSubmit}>
+              <textarea
+                ref={textareaRef}
+                aria-label={t.placeholder}
+                placeholder={t.placeholder}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+                maxLength={2000}
+                disabled={loading}
+              />
+              <button type="submit" className="send-button" aria-label={t.send} disabled={!input.trim() || loading}>
+                <HiArrowUp aria-hidden="true" />
+              </button>
+            </form>
+          </div>
         </div>
       </section>
     </main>
